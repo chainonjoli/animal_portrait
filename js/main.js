@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initParticles();
   initNavigation();
   initTabs();
+  initMenuTabs();
   initDiagnosis();
   initGroupDiagnosis();
   initEncyclopedia();
@@ -81,16 +82,20 @@ function initNavigation() {
 }
 
 // ============================================================
-// Tabs
+// Tabs (For Encyclopedia Filter)
 // ============================================================
 function initTabs() {
   document.querySelectorAll('.tabs').forEach(tabGroup => {
     tabGroup.querySelectorAll('.tab-btn').forEach(btn => {
+      // Skip menu switcher tab buttons
+      if (btn.id === 'tabBtnIndividual' || btn.id === 'tabBtnGroup') return;
       btn.addEventListener('click', () => {
         const target = btn.dataset.tab;
         const scope = btn.closest('section') || document;
         // Update buttons
-        tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        tabGroup.querySelectorAll('.tab-btn').forEach(b => {
+          if (b.id !== 'tabBtnIndividual' && b.id !== 'tabBtnGroup') b.classList.remove('active');
+        });
         btn.classList.add('active');
         // Update panels
         scope.querySelectorAll('.tab-panel').forEach(panel => {
@@ -102,7 +107,33 @@ function initTabs() {
 }
 
 // ============================================================
-// Individual Diagnosis
+// Diagnosis Menu Tabs Switcher
+// ============================================================
+function initMenuTabs() {
+  const btnIndividual = document.getElementById('tabBtnIndividual');
+  const btnGroup = document.getElementById('tabBtnGroup');
+  const panelIndividual = document.getElementById('panelIndividual');
+  const panelGroup = document.getElementById('panelGroup');
+
+  if (btnIndividual && btnGroup && panelIndividual && panelGroup) {
+    btnIndividual.addEventListener('click', () => {
+      btnIndividual.classList.add('active');
+      btnGroup.classList.remove('active');
+      panelIndividual.classList.remove('hidden');
+      panelGroup.classList.add('hidden');
+    });
+
+    btnGroup.addEventListener('click', () => {
+      btnGroup.classList.add('active');
+      btnIndividual.classList.remove('active');
+      panelGroup.classList.remove('hidden');
+      panelIndividual.classList.add('hidden');
+    });
+  }
+}
+
+// ============================================================
+// Individual Diagnosis (Menu A)
 // ============================================================
 function initDiagnosis() {
   const form = document.getElementById('diagnosisForm');
@@ -124,7 +155,7 @@ function showDiagnosisResult(info) {
   const groupClass = info.group.id.toLowerCase();
   
   container.innerHTML = `
-    <div class="result-animal-card glass-card">
+    <div class="result-animal-card glass-card" style="margin-top: 32px; border: 1px solid rgba(217, 167, 82, 0.25); background: #fff;">
       <span class="result-emoji">${info.profile.emoji}</span>
       <div class="result-name">${info.animal}</div>
       <div class="result-full-name font-playfair">${info.name}</div>
@@ -167,12 +198,41 @@ function showDiagnosisResult(info) {
         </div>
       </div>
       
-      <div class="share-area">
+      <div class="share-area" style="margin-top: 24px; display: flex; justify-content: center;">
         <button class="btn btn-gold" onclick="shareResult('${info.animal}', '${info.name}')" style="padding: 10px 28px;">
           <span>SHARE PORTRAIT</span>
           <span class="btn-sub-text">診断結果をシェアする</span>
         </button>
       </div>
+    </div>
+
+    <!-- Promotion Card (中盤CTA) -->
+    <div class="glass-card text-center mt-32" style="border: 1px solid rgba(212, 175, 55, 0.25); padding: 32px 24px; background: #fff;">
+      <p style="font-size: 1.1rem; color: var(--primary); font-weight: bold; margin-bottom: 16px;">
+        無料診断はここまでです🐾
+      </p>
+      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 20px;">
+        もっと詳しく知りたい方には、<br>
+        あなた専用の<strong>「保存版アニマル気質レポート」</strong>をご用意しています。
+      </p>
+      <div style="display: inline-block; text-align: left; font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 20px; border-left: 2px solid var(--primary); padding-left: 16px;">
+        ✔ 才能<br>
+        ✔ 恋愛傾向<br>
+        ✔ 人間関係のクセ<br>
+        ✔ 仕事での強み<br>
+        ✔ 相性の良いタイプ<br>
+        ✔ 気をつけたいポイント
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 24px;">
+        を、読みやすいPDFにまとめてお届けします。
+      </p>
+      <p style="font-size: 0.9rem; color: var(--text-main); font-weight: bold; margin-bottom: 24px;">
+        気になる方は公式ラインで<br>
+        <span style="color: #e91e63;">「レポート希望」</span>と送ってください♡
+      </p>
+      <a href="https://lin.ee/YqRN22R" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="width: 100%; max-width: 320px; padding: 12px 24px; margin: 0 auto; display: block; text-decoration: none;">
+        <span>無料診断をLINEで体験する</span>
+      </a>
     </div>
   `;
   container.classList.add('active');
@@ -189,7 +249,7 @@ function shareResult(animal, name) {
 }
 
 // ============================================================
-// Group Diagnosis (推し関係性)
+// Group Diagnosis (Menu B, C, D)
 // ============================================================
 let memberCount = 2;
 const MAX_MEMBERS = 12;
@@ -217,15 +277,15 @@ function addMemberRow() {
   const row = document.createElement('div');
   row.className = 'member-row';
   row.id = `memberRow${memberCount}`;
+  row.style.cssText = 'display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--bg-dark); border-radius: var(--radius); border: 1px solid rgba(181,172,159,0.25);';
   
-  // Format member index as 01, 02, etc.
   const formattedNum = String(memberCount).padStart(2, '0');
   
   row.innerHTML = `
-    <span class="member-num font-playfair">${formattedNum}</span>
-    <input type="text" class="form-input name-input" placeholder="名前" data-idx="${memberCount}">
-    <input type="number" class="form-input number-input" placeholder="番号(1-60)" min="1" max="60" data-idx="${memberCount}">
-    <button type="button" class="remove-btn" onclick="removeMemberRow(${memberCount})">×</button>
+    <span class="member-num font-playfair" style="font-size: 0.95rem; font-weight: bold; color: var(--primary); width: 24px; text-align: center;">${formattedNum}</span>
+    <input type="text" class="form-input name-input" placeholder="名前" data-idx="${memberCount}" style="flex: 2; padding: 8px 12px; font-size: 0.85rem; border: 1px solid rgba(181,172,159,0.3); border-radius: var(--radius-sm);">
+    <input type="number" class="form-input number-input" placeholder="番号(1-60)" min="1" max="60" data-idx="${memberCount}" style="flex: 1; max-width: 100px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid rgba(181,172,159,0.3); border-radius: var(--radius-sm);">
+    <button type="button" class="remove-btn" onclick="removeMemberRow(${memberCount})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(223,152,146,0.1); color: var(--secondary); cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">×</button>
   `;
   container.appendChild(row);
   updateAddButton();
@@ -287,7 +347,6 @@ function loadPreset(presetName) {
   const preset = presets[presetName];
   if (!preset) return;
   
-  // Clear existing rows
   const container = document.getElementById('memberInputs');
   container.innerHTML = '';
   memberCount = 0;
@@ -298,11 +357,12 @@ function loadPreset(presetName) {
     const row = document.createElement('div');
     row.className = 'member-row';
     row.id = `memberRow${memberCount}`;
+    row.style.cssText = 'display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--bg-dark); border-radius: var(--radius); border: 1px solid rgba(181,172,159,0.25);';
     row.innerHTML = `
-      <span class="member-num font-playfair">${formattedNum}</span>
-      <input type="text" class="form-input name-input" placeholder="名前" value="${member.name}" data-idx="${memberCount}">
-      <input type="number" class="form-input number-input" placeholder="番号(1-60)" value="${member.number}" min="1" max="60" data-idx="${memberCount}">
-      <button type="button" class="remove-btn" onclick="removeMemberRow(${memberCount})">×</button>
+      <span class="member-num font-playfair" style="font-size: 0.95rem; font-weight: bold; color: var(--primary); width: 24px; text-align: center;">${formattedNum}</span>
+      <input type="text" class="form-input name-input" placeholder="名前" value="${member.name}" data-idx="${memberCount}" style="flex: 2; padding: 8px 12px; font-size: 0.85rem; border: 1px solid rgba(181,172,159,0.3); border-radius: var(--radius-sm);">
+      <input type="number" class="form-input number-input" placeholder="番号(1-60)" value="${member.number}" min="1" max="60" data-idx="${memberCount}" style="flex: 1; max-width: 100px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid rgba(181,172,159,0.3); border-radius: var(--radius-sm);">
+      <button type="button" class="remove-btn" onclick="removeMemberRow(${memberCount})" style="width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(223,152,146,0.1); color: var(--secondary); cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">×</button>
     `;
     container.appendChild(row);
   });
@@ -332,6 +392,291 @@ function analyzeGroup() {
   showGroupResult(members);
 }
 
+function generatePremiumReportHTML(members, balance, pairs) {
+  const namesList = members.map(m => m.name).join('・');
+  const count = members.length;
+  let groupName = 'チーム';
+  const nameJoined = members.map(m => m.name).join('');
+  if (nameJoined.includes('廉') || nameJoined.includes('海人') || nameJoined.includes('紫耀') || nameJoined.includes('神宮寺') || nameJoined.includes('岸')) {
+    groupName = 'キンプリ';
+  } else if (nameJoined.includes('岩本') || nameJoined.includes('深澤') || nameJoined.includes('ラウール') || nameJoined.includes('渡辺') || nameJoined.includes('目黒') || nameJoined.includes('向井') || nameJoined.includes('阿部') || nameJoined.includes('宮舘') || nameJoined.includes('佐久間')) {
+    groupName = 'Snow Man';
+  }
+  
+  // Dynamic Title Suffix Generation
+  let suffix = '最強だった。';
+  const dominant = balance.dominant;
+  const counts = balance.counts;
+  const topScore = pairs.length > 0 ? pairs[0].score : 0;
+  
+  if (counts.MOON > 0 && counts.EARTH > 0 && counts.SUN > 0) {
+    suffix = '奇跡のバランスだった。';
+  } else if (topScore >= 90) {
+    suffix = '尊さの極みだった。';
+  } else if (dominant === 'MOON') {
+    suffix = '運命の絆で結ばれていた。';
+  } else if (dominant === 'EARTH') {
+    suffix = 'プロフェッショナルの集団だった。';
+  } else if (dominant === 'SUN') {
+    suffix = '可能性が無限大だった。';
+  } else {
+    const hash = nameJoined.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const options = ['唯一無二のチームだった。', '最強のチームだった。', '圧倒的な無敵感だった。'];
+    suffix = options[hash % options.length];
+  }
+  
+  const mainTitle = `${count}人の${groupName}は、${suffix}`;
+  
+  const cardsHTML = members.map(m => {
+    const groupNameJP = m.group.name;
+    const groupClass = m.group.id.toLowerCase();
+    
+    let highlight = m.profile.keyword;
+    if (m.animal === 'チータ') highlight = '常に高い目標へスマートに突き進むチャレンジャー';
+    else if (m.animal === 'ゾウ') highlight = '陰の努力を見せないプロの職人肌';
+    else if (m.animal === 'ペガサス') highlight = '誰も真似できない唯一無二の天才肌';
+    else if (m.animal === 'たぬき') highlight = '普段のお茶目さと、ステージでの覇王感のギャップ（大化けする天才）';
+    else if (m.animal === '虎') highlight = '裏表が一切ない、圧倒的な誠実さとピュアな生き方';
+    
+    let nameFontSize = '0.75rem';
+    let namePadding = '4px 12px';
+    if (count >= 8 || m.name.length >= 5) {
+      nameFontSize = '0.62rem';
+      namePadding = '4px 4px';
+    } else if (count >= 6 || m.name.length >= 4) {
+      nameFontSize = '0.68rem';
+      namePadding = '4px 8px';
+    }
+    
+    return `
+      <div class="premium-member-card">
+        <div class="premium-member-name-tag" style="font-size: ${nameFontSize}; padding: ${namePadding};">${m.name}さん</div>
+        <div class="premium-member-avatar-box">
+          <div class="premium-member-avatar-bg">${m.profile.emoji}</div>
+          <div class="premium-member-avatar-badge font-playfair">${m.number}</div>
+        </div>
+        <div class="premium-member-animal-num">${m.animal}</div>
+        <div class="premium-member-group-label ${groupClass}">${groupNameJP}</div>
+        <div class="premium-member-desc">${highlight}</div>
+      </div>
+    `;
+  }).join('');
+
+  const animalNames = members.map(m => m.animal);
+  const hasDuplicates = new Set(animalNames).size !== animalNames.length;
+  
+  const col2Title = hasDuplicates 
+    ? '才能のポジショニング<br>お互いの強みを活かし合う' 
+    : '才能のポジショニング<br>すべての個性が被らない';
+
+  const listClass = count >= 6 ? 'premium-roles-list grid-2col' : 'premium-roles-list';
+
+  const rolesListHTML = members.map(m => {
+    const roleText = ANIMAL_ROLES[m.animal] || 'グループに貢献する大切な才能';
+    return `
+      <li class="premium-roles-item">
+        <strong>${m.name}さん (${m.animal})</strong><br>
+        ${roleText}
+      </li>
+    `;
+  }).join('');
+
+  const topPair = pairs[0];
+  let connectionTitle = '言葉を超えた、圧倒的な「自立と信頼」の絆';
+  let connectionText = `メンバー全員がお互いに「自分にないもの」を持っているからこそ、無駄な衝突がなく、純粋なリスペクトで繋がることができます。<br>誰か一人が欠けても成り立たない、奇跡的なバランスがここに完成しています。`;
+  if (topPair) {
+    connectionTitle = `尊すぎる！${topPair.member1.name} × ${topPair.member2.name}`;
+    connectionText = `${topPair.member1.name}さんと${topPair.member2.name}さんは、グループの結びつきをより強固にする特別なシナジー（${topPair.relationship.label}）を放ちます。<br>お互いの長所を引き出し合う二人の存在が、グループ全体の無敵感をさらに引き上げています。`;
+  }
+  
+  const balanceText = getBalanceComment(balance);
+  const footerMainText = `だから、${count}人の${groupName}は、永遠に特別。`;
+
+  return `
+    <div class="premium-report-wrapper" id="premiumReportWrapper">
+      <div class="premium-report" id="premiumReport">
+        <div class="premium-report-header">
+          <div class="premium-report-names font-playfair">${namesList}</div>
+          <h2 class="premium-report-title">${mainTitle}</h2>
+          <div class="premium-report-subtitle-badge">アニマル気質（動物占い）から見る、奇跡の最強バランス！</div>
+        </div>
+        
+        <div class="premium-members-row">
+          ${cardsHTML}
+        </div>
+        
+        <div class="premium-divider">
+          <span class="premium-divider-icon">✦ ✦ ✦</span>
+        </div>
+        
+        <div class="premium-details-grid">
+          <div class="premium-details-col">
+            <div class="premium-col-header">
+              <span class="premium-col-num">1</span>
+              <h3 class="premium-col-title">3つのグループの<br>完璧な黄金比率</h3>
+            </div>
+            <div class="premium-balance-visual">
+              <div class="premium-balance-item">
+                <span class="premium-balance-badge">🌙</span>
+                <span class="premium-balance-count">${balance.counts.MOON}人</span>
+              </div>
+              <div class="premium-balance-item">
+                <span class="premium-balance-badge">🌍</span>
+                <span class="premium-balance-count">${balance.counts.EARTH}人</span>
+              </div>
+              <div class="premium-balance-item">
+                <span class="premium-balance-badge">☀️</span>
+                <span class="premium-balance-count">${balance.counts.SUN}人</span>
+              </div>
+            </div>
+            <p class="premium-col-desc">
+              月（MOON）が共感と絆を、地球（EARTH）がプロ意識と実行力を、太陽（SUN）が直感と華をもたらします。<br>
+              ${balanceText}
+            </p>
+          </div>
+          
+          <div class="premium-details-col">
+            <div class="premium-col-header">
+              <span class="premium-col-num">2</span>
+              <h3 class="premium-col-title">${col2Title}</h3>
+            </div>
+            <ul class="${listClass}">
+              ${rolesListHTML}
+            </ul>
+            <div class="premium-bubble-card">
+              お互いに「自分にないもの」を相手が持っているから、純粋なリスペクトだけで繋がれる！
+            </div>
+          </div>
+          
+          <div class="premium-details-col">
+            <div class="premium-col-header">
+              <span class="premium-col-num">3</span>
+              <h3 class="premium-col-title">関係性が生み出す<br>圧倒的な化学反応</h3>
+            </div>
+            <div class="premium-connection-headline font-serif">${connectionTitle}</div>
+            <p class="premium-col-desc">
+              ${connectionText}
+              <br><br>
+              個々の美学と特性が重なり合うことで、グループ全体として美しく調和されたエッセンスが醸し出されています。
+            </p>
+          </div>
+        </div>
+        
+        <div class="premium-footer-msg">
+          <p class="premium-footer-text-small">グループが揃ったときの無敵感や、放たれるハッピーで圧倒的なオーラは…</p>
+          <h4 class="premium-footer-text-main">${footerMainText} ♡</h4>
+        </div>
+      </div>
+    </div>
+    
+    <div class="premium-actions">
+      <button class="btn btn-gold" id="btnDownloadReport" style="padding: 14px 28px; box-shadow: 0 4px 15px rgba(217, 167, 82, 0.3);">
+        <span style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9 2v2H3v-2h18z"/></svg>
+          レポートを画像として保存 (SNSシェア用)
+        </span>
+      </button>
+    </div>
+    
+    <div class="capture-modal-overlay" id="captureModalOverlay">
+      <div class="capture-modal">
+        <button class="capture-modal-close" id="captureModalClose">×</button>
+        <h3 class="capture-modal-title">画像が生成されました ✦</h3>
+        <p class="capture-modal-desc">スマホで保存する場合は、下の画像を長押しして「写真に保存」を選択してください。</p>
+        <div class="capture-modal-image-container" id="captureModalImageContainer"></div>
+      </div>
+    </div>
+  `;
+}
+
+function initPremiumReportCapture() {
+  const downloadBtn = document.getElementById('btnDownloadReport');
+  if (!downloadBtn) return;
+  
+  downloadBtn.addEventListener('click', () => {
+    const reportElement = document.getElementById('premiumReport');
+    if (!reportElement) return;
+    
+    showToast('レポート画像を生成中... ⏳');
+    
+    // Temporarily add capture class to force desktop layout
+    reportElement.classList.add('is-capturing');
+    
+    // Wait for DOM to adjust styles before capturing
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const options = {
+          scale: 2,
+          allowTaint: true, // Avoid CORS taint errors on local file:// execution
+          backgroundColor: '#faf6f0',
+          logging: false
+        };
+        
+        html2canvas(reportElement, options).then(canvas => {
+          // Remove capturing class right after
+          reportElement.classList.remove('is-capturing');
+          
+          const dataUrl = canvas.toDataURL('image/png');
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          const overlay = document.getElementById('captureModalOverlay');
+          const container = document.getElementById('captureModalImageContainer');
+          const closeBtn = document.getElementById('captureModalClose');
+          
+          if (overlay && container) {
+            let actionHTML = '';
+            if (!isMobile) {
+              // Add a direct download button inside the modal for PC users
+              actionHTML = `
+                <div style="margin-top: 16px; display: flex; justify-content: center;">
+                  <a href="${dataUrl}" download="oshi_chemistry_report_${Date.now()}.png" class="btn btn-gold" style="padding: 10px 24px; text-decoration: none; display: inline-block;">
+                    <span>画像をPCに保存（ダウンロード）する</span>
+                  </a>
+                </div>
+              `;
+            } else {
+              actionHTML = `
+                <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 8px;">画像を長押しして「写真に保存」を選択してください。</p>
+              `;
+            }
+            
+            container.innerHTML = `
+              <img src="${dataUrl}" alt="診断レポート画像" style="width: 100%; height: auto; border-radius: var(--radius-sm);">
+              ${actionHTML}
+            `;
+            
+            // Update description text based on device
+            const descEl = overlay.querySelector('.capture-modal-desc');
+            if (descEl) {
+              descEl.innerHTML = isMobile 
+                ? 'スマホで保存する場合は、下の画像を長押しして「写真に保存」を選択してください。'
+                : '生成されたレポート画像です。下のボタンから画像をPCに保存できます。';
+            }
+            
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            const closeModal = () => {
+              overlay.classList.remove('active');
+              document.body.style.overflow = '';
+            };
+            
+            if (closeBtn) closeBtn.onclick = closeModal;
+            overlay.onclick = (e) => {
+              if (e.target === overlay) closeModal();
+            };
+          }
+          showToast('レポート画像が生成されました ✦');
+        }).catch(err => {
+          reportElement.classList.remove('is-capturing');
+          console.error('Image capture failed:', err);
+          showToast('画像の生成に失敗しました。ローカル環境のセキュリティ制限の可能性があります。');
+        });
+      }, 100);
+    });
+  });
+}
+
 function showGroupResult(members) {
   const container = document.getElementById('groupResult');
   if (!container) return;
@@ -355,20 +700,23 @@ function showGroupResult(members) {
   
   // Build HTML (Editorial layouts)
   container.innerHTML = `
+    <!-- Premium Report -->
+    ${generatePremiumReportHTML(members, balance, pairs)}
+
     <!-- Members Overview -->
-    <div class="section-header">
+    <div class="section-header" style="margin-top: 40px;">
       <span class="section-num font-playfair">02-A</span>
       <h2 class="serif-title">ポートレート</h2>
       <span class="section-sub">OSHI ARCHIVE</span>
       <div class="header-divider"></div>
     </div>
-    <div class="members-overview">
+    <div class="members-overview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-bottom: 40px;">
       ${members.map(m => `
-        <div class="member-card-mini glass-card animate-hover" onclick="showMemberModal(${JSON.stringify(m).replace(/"/g, '&quot;')})">
-          <span class="mini-emoji">${m.profile.emoji}</span>
-          <div class="mini-name">${m.name}</div>
-          <div class="mini-animal">${m.animal}（No.${m.number}）</div>
-          <span class="result-group-badge ${m.group.id.toLowerCase()}" style="margin-top:12px;font-size:0.65rem;padding:4px 12px;">
+        <div class="member-card-mini glass-card animate-hover" onclick="showMemberModal(${JSON.stringify(m).replace(/"/g, '&quot;')})" style="text-align: center; padding: 24px 16px; cursor: pointer; background: #fff; border: 1px solid rgba(181, 172, 159, 0.25);">
+          <span class="mini-emoji" style="font-size: 2.2rem; display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 50%; margin-bottom: 12px;">${m.profile.emoji}</span>
+          <div class="mini-name" style="font-size: 0.95rem; font-weight: 700; margin-bottom: 2px;">${m.name}</div>
+          <div class="mini-animal" style="font-size: 0.75rem; color: var(--text-sub);">${m.animal}（No.${m.number}）</div>
+          <span class="result-group-badge ${m.group.id.toLowerCase()}" style="margin-top:12px;font-size:0.65rem;padding:4px 12px; margin-bottom: 0;">
             ${m.group.emoji} ${m.group.name}
           </span>
         </div>
@@ -376,7 +724,7 @@ function showGroupResult(members) {
     </div>
 
     <!-- Balance Chart -->
-    <div class="glass-card mb-32">
+    <div class="glass-card mb-32" style="background: #fff; border: 1px solid rgba(181, 172, 159, 0.25); padding: 32px 24px; border-radius: var(--radius);">
       <div class="text-center mb-24">
         <h3 class="serif-title" style="font-size: 1.5rem; margin-bottom: 6px;">グループの空気感</h3>
         <span class="section-sub" style="font-size:0.65rem;color:var(--primary);letter-spacing:0.2em;display:block;">GROUP VIBES</span>
@@ -411,10 +759,22 @@ function showGroupResult(members) {
     </div>
 
     <!-- Correlation Map -->
-    <div class="glass-card mb-32" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="glass-card mb-32" style="display: flex; flex-direction: column; align-items: center; background: #fff; border: 1px solid rgba(181, 172, 159, 0.25); padding: 32px 24px; border-radius: var(--radius);">
       <div class="text-center mb-24">
-        <h3 class="serif-title" style="font-size: 1.5rem; margin-bottom: 6px;">ケミストリーマップ</h3>
-        <span class="section-sub" style="font-size:0.65rem;color:var(--primary);letter-spacing:0.2em;display:block;">CHEMISTRY MAP</span>
+        <h3 class="serif-title" style="font-size: 1.5rem; margin-bottom: 6px;">メンバー相関図（ケミストリーマップ）</h3>
+        <span class="section-sub" style="font-size:0.65rem;color:var(--primary);letter-spacing:0.2em;display:block;margin-bottom:16px;">CHEMISTRY MAP</span>
+        <p style="font-size:0.8rem; color:var(--text-sub); line-height:1.6; max-width:520px; margin:0 auto 16px; padding:0 12px; letter-spacing:0.02em;">
+          グループ全体の人間関係をビジュアル化した相関図です。メンバーを繋ぐ線の色は「関係性のタイプ」を表し、線の透明度が低い（濃い）ほど相性のスコアが高くなっています。メンバーをタップすると詳細プロフィールが表示されます。
+        </p>
+        
+        <!-- 凡例 (Legend) -->
+        <div class="map-legend" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin: 16px auto 0; max-width: 520px; font-size: 0.75rem; color: var(--text-sub); padding: 12px; background: rgba(217, 167, 82, 0.04); border: 1px solid rgba(217, 167, 82, 0.15); border-radius: var(--radius-sm);">
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #e91e63; display: inline-block;"></span>✨ 魂の共鳴 (90点〜)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #9c27b0; display: inline-block;"></span>💕 最強コンビ (80点〜)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #2196f3; display: inline-block;"></span>🌈 いい空気感 (70点〜)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #4caf50; display: inline-block;"></span>📚 成長し合える (60点〜)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 50%; background-color: #ff9800; display: inline-block;"></span>⚡ スパイス関係 (0点〜)</span>
+        </div>
       </div>
       <div class="correlation-map" id="correlationMap">
         <svg class="connection-lines" id="connectionLines"></svg>
@@ -422,45 +782,80 @@ function showGroupResult(members) {
     </div>
 
     <!-- Top Pairs -->
-    <div class="glass-card mb-32">
+    <div class="glass-card mb-32" style="background: #fff; border: 1px solid rgba(181, 172, 159, 0.25); padding: 32px 24px; border-radius: var(--radius);">
       <div class="text-center mb-24">
-        <h3 class="serif-title" style="font-size: 1.5rem; margin-bottom: 6px;">尊すぎる関係性ランキング</h3>
+        <h3 class="serif-title" style="font-size: 1.5rem; margin-bottom: 6px;">尊すぎる関係性ランキング (Top 3)</h3>
         <span class="section-sub" style="font-size:0.65rem;color:var(--primary);letter-spacing:0.2em;display:block;">RELATIONSHIP RANKING</span>
       </div>
-      <div class="pairs-grid">
-        ${pairs.map((p, i) => `
-          <div class="pair-card" style="border-left:2px solid ${p.relationship.color};">
-            <div class="pair-emojis">
-              ${p.member1.profile.emoji}<span class="pair-heart">✦</span>${p.member2.profile.emoji}
+      <div class="pairs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        ${pairs.slice(0, 3).map((p, i) => `
+          <div class="pair-card" style="border-left:2px solid ${p.relationship.color}; display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #fff; border-top: 1px solid rgba(181,172,159,0.2); border-right: 1px solid rgba(181,172,159,0.2); border-bottom: 1px solid rgba(181,172,159,0.2); border-radius: var(--radius); transition: var(--transition);">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+              <div class="pair-rank font-playfair" style="font-size: 1.15rem; font-weight: bold; color: var(--primary); width: 36px; border-right: 1px solid rgba(212,175,55,0.15); padding-right: 8px; flex-shrink: 0; text-align: center;">
+                No.${i + 1}
+              </div>
+              <div class="pair-emojis" style="font-size: 1.8rem; display: flex; align-items: center; gap: 2px;">
+                ${p.member1.profile.emoji}<span class="pair-heart" style="font-size: 1rem; opacity: 0.8;">✦</span>${p.member2.profile.emoji}
+              </div>
+              <div class="pair-info" style="margin-left: 4px;">
+                <div class="pair-names" style="font-size: 0.85rem; font-weight: 700; margin-bottom: 2px;">${p.member1.name} × ${p.member2.name}</div>
+                <div class="pair-label" style="color:${p.relationship.color}; font-weight: 500; font-size: 0.75rem;">${p.relationship.label} ${p.label}</div>
+                ${p.bonus ? `<div style="font-size:0.65rem;color:var(--primary-light);margin-top:4px;letter-spacing:0.02em;">⭐ ${p.bonus}</div>` : ''}
+              </div>
             </div>
-            <div class="pair-info">
-              <div class="pair-names">${p.member1.name} × ${p.member2.name}</div>
-              <div class="pair-label" style="color:${p.relationship.color}; font-weight: 500;">${p.relationship.label} ${p.label}</div>
-              ${p.bonus ? `<div style="font-size:0.65rem;color:var(--primary-light);margin-top:4px;letter-spacing:0.02em;">⭐ ${p.bonus}</div>` : ''}
-            </div>
-            <div class="pair-score font-playfair" style="color:${p.relationship.color};">${p.score}</div>
+            <div class="pair-score font-playfair" style="color:${p.relationship.color}; margin-left: 12px; flex-shrink: 0; font-size: 1.5rem; font-weight: 800;">${p.score}</div>
           </div>
         `).join('')}
       </div>
     </div>
 
     <!-- Group Summary -->
-    <div class="glass-card text-center" style="border: 1px solid rgba(212, 175, 55, 0.25);">
+    <div class="glass-card text-center" style="border: 1px solid rgba(212, 175, 55, 0.25); background: #fff; padding: 40px 24px; border-radius: var(--radius);">
       <h3 class="serif-title mb-16" style="font-size:1.6rem;letter-spacing:0.15em;">このグループが愛される理由</h3>
       <span class="section-sub" style="font-size:0.65rem;color:var(--primary);letter-spacing:0.2em;display:block;margin-bottom:32px;">WHY WE LOVE THEM</span>
       <div class="group-summary-content">
         ${generateGroupSummary(members, balance, pairs)}
       </div>
-      <div class="share-area mt-32">
+      <div class="share-area mt-32" style="margin-top: 24px; display: flex; justify-content: center;">
         <button class="btn btn-gold" onclick="shareGroupResult('${members.map(m=>m.name).join('、')}')">
           <span>SHARE CHEMISTRY REPORT</span>
           <span class="btn-sub-text">レポートをコピーする</span>
         </button>
       </div>
     </div>
+
+    <!-- Promotion Card (中盤CTA) -->
+    <div class="glass-card text-center mt-32" style="border: 1px solid rgba(212, 175, 55, 0.25); padding: 32px 24px; background: #fff;">
+      <p style="font-size: 1.1rem; color: var(--primary); font-weight: bold; margin-bottom: 16px;">
+        無料診断はここまでです🐾
+      </p>
+      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 20px;">
+        もっと詳しく知りたい方には、<br>
+        あなた専用の<strong>「保存版アニマル気質レポート」</strong>をご用意しています。
+      </p>
+      <div style="display: inline-block; text-align: left; font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 20px; border-left: 2px solid var(--primary); padding-left: 16px;">
+        ✔ 才能<br>
+        ✔ 恋愛傾向<br>
+        ✔ 人間関係のクセ<br>
+        ✔ 仕事での強み<br>
+        ✔ 相性の良いタイプ<br>
+        ✔ 気をつけたいポイント
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-sub); line-height: 1.8; margin-bottom: 24px;">
+        を、読みやすいPDFにまとめてお届けします。
+      </p>
+      <p style="font-size: 0.9rem; color: var(--text-main); font-weight: bold; margin-bottom: 24px;">
+        気になる方は公式ラインで<br>
+        <span style="color: #e91e63;">「レポート希望」</span>と送ってください♡
+      </p>
+      <a href="https://lin.ee/YqRN22R" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="width: 100%; max-width: 320px; padding: 12px 24px; margin: 0 auto; display: block; text-decoration: none;">
+        <span>無料診断をLINEで体験する</span>
+      </a>
+    </div>
   `;
   
   container.classList.add('active');
+  initPremiumReportCapture();
   
   // Draw correlation map after DOM is ready
   requestAnimationFrame(() => {
@@ -563,7 +958,7 @@ const ANIMAL_ROLES = {
   'たぬき': 'みんなの緊張をほぐし、そこにいるだけで空気を優しく丸くする「和みのマスコット」',
   '子守熊': '冷静な先読みと豊かなサービス精神でファンを魅了する「芸術肌のロマンチスト」',
   'ゾウ': 'ここぞという時にどっしりと支え、限界を決めずに努力し続ける「ストイックな要石」',
-  'ひつじ': 'メンバーの心の変化に素早く気づき、そっと調和を守る「優しき守護神」',
+  'ひつじ': 'メンバーの心の変化に素快速気づき、そっと調和を守る「優しき守護神」',
   'ペガサス': '型にはまらない直感と感性で、想像を超えた次元を作る「自由な天才表現者」'
 };
 
