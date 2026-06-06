@@ -157,7 +157,7 @@ function showDiagnosisResult(info) {
   container.innerHTML = `
     <div class="result-animal-card glass-card" style="margin-top: 32px; border: 1px solid rgba(217, 167, 82, 0.25); background: #fff;">
       <span class="result-emoji">${info.profile.emoji}</span>
-      <div class="result-name">${info.animal}</div>
+      <div class="result-name">${info.animal} <span style="font-size: 1.1rem; font-weight: normal; color: var(--text-sub);">(No.${info.number})</span></div>
       <div class="result-full-name font-playfair">${info.name}</div>
       <span class="result-group-badge ${groupClass}">
         ${info.group.emoji} ${info.group.name}
@@ -584,6 +584,7 @@ function generatePremiumReportHTML(members, balance, pairs) {
         <h3 class="capture-modal-title">画像が生成されました ✦</h3>
         <p class="capture-modal-desc">スマホで保存する場合は、下の画像を長押しして「写真に保存」を選択してください。</p>
         <div class="capture-modal-image-container" id="captureModalImageContainer"></div>
+        <div id="captureModalActionContainer" style="margin-top: 16px;"></div>
       </div>
     </div>
   `;
@@ -621,6 +622,7 @@ function initPremiumReportCapture() {
           
           const overlay = document.getElementById('captureModalOverlay');
           const container = document.getElementById('captureModalImageContainer');
+          const actionContainer = document.getElementById('captureModalActionContainer');
           const closeBtn = document.getElementById('captureModalClose');
           
           if (overlay && container) {
@@ -628,7 +630,7 @@ function initPremiumReportCapture() {
             if (!isMobile) {
               // Add a direct download button inside the modal for PC users
               actionHTML = `
-                <div style="margin-top: 16px; display: flex; justify-content: center;">
+                <div style="display: flex; justify-content: center;">
                   <a href="${dataUrl}" download="oshi_chemistry_report_${Date.now()}.png" class="btn btn-gold" style="padding: 10px 24px; text-decoration: none; display: inline-block;">
                     <span>画像をPCに保存（ダウンロード）する</span>
                   </a>
@@ -642,8 +644,11 @@ function initPremiumReportCapture() {
             
             container.innerHTML = `
               <img src="${dataUrl}" alt="診断レポート画像" style="width: 100%; height: auto; border-radius: var(--radius-sm);">
-              ${actionHTML}
             `;
+            
+            if (actionContainer) {
+              actionContainer.innerHTML = actionHTML;
+            }
             
             // Update description text based on device
             const descEl = overlay.querySelector('.capture-modal-desc');
@@ -677,7 +682,16 @@ function initPremiumReportCapture() {
   });
 }
 
+let lastAnalyzedMembers = [];
+
+function showMemberModalFromIndex(idx) {
+  if (lastAnalyzedMembers[idx]) {
+    showMemberModal(lastAnalyzedMembers[idx]);
+  }
+}
+
 function showGroupResult(members) {
+  lastAnalyzedMembers = members;
   const container = document.getElementById('groupResult');
   if (!container) return;
   
@@ -711,8 +725,8 @@ function showGroupResult(members) {
       <div class="header-divider"></div>
     </div>
     <div class="members-overview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-bottom: 40px;">
-      ${members.map(m => `
-        <div class="member-card-mini glass-card animate-hover" onclick="showMemberModal(${JSON.stringify(m).replace(/"/g, '&quot;')})" style="text-align: center; padding: 24px 16px; cursor: pointer; background: #fff; border: 1px solid rgba(181, 172, 159, 0.25);">
+      ${members.map((m, i) => `
+        <div class="member-card-mini glass-card animate-hover" onclick="showMemberModalFromIndex(${i})" style="text-align: center; padding: 24px 16px; cursor: pointer; background: #fff; border: 1px solid rgba(181, 172, 159, 0.25);">
           <span class="mini-emoji" style="font-size: 2.2rem; display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 50%; margin-bottom: 12px;">${m.profile.emoji}</span>
           <div class="mini-name" style="font-size: 0.95rem; font-weight: 700; margin-bottom: 2px;">${m.name}</div>
           <div class="mini-animal" style="font-size: 0.75rem; color: var(--text-sub);">${m.animal}（No.${m.number}）</div>
@@ -958,7 +972,7 @@ const ANIMAL_ROLES = {
   'たぬき': 'みんなの緊張をほぐし、そこにいるだけで空気を優しく丸くする「和みのマスコット」',
   '子守熊': '冷静な先読みと豊かなサービス精神でファンを魅了する「芸術肌のロマンチスト」',
   'ゾウ': 'ここぞという時にどっしりと支え、限界を決めずに努力し続ける「ストイックな要石」',
-  'ひつじ': 'メンバーの心の変化に素快速気づき、そっと調和を守る「優しき守護神」',
+  'ひつじ': 'メンバーの心の変化に素早く気づき、そっと調和を守る「優しき守護神」',
   'ペガサス': '型にはまらない直感と感性で、想像を超えた次元を作る「自由な天才表現者」'
 };
 
