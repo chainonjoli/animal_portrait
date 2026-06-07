@@ -235,7 +235,7 @@ const CHARACTER_TABLE = [
   { n:53, animal:'黒ひょう',group:'MOON',  name:'感情豊かな黒ひょう', spell:'太陽' },
   { n:54, animal:'虎',      group:'EARTH', name:'楽天的な虎', spell:'ろうそく' },
   { n:55, animal:'虎',      group:'EARTH', name:'パワフルな虎', spell:'山' },
-  { n:56, animal:'黒ひょう',group:'MOON',  name:'落ち込みの激しい黒ひょう', spell:'大地' },
+  { n:56, animal:'黒ひょう',group:'MOON',  name:'気取らない黒ひょう', spell:'大地' },
   { n:57, animal:'ライオン',group:'SUN',   name:'悠然と構えるライオン', spell:'金属' },
   { n:58, animal:'ライオン',group:'SUN',   name:'華やかなライオン', spell:'宝石' },
   { n:59, animal:'黒ひょう',group:'MOON',  name:'束縛を嫌う黒ひょう', spell:'海' },
@@ -287,9 +287,9 @@ const RELATIONSHIP_TYPES = {
  * 生年月日から本質キャラクター番号 (1〜60) を取得
  */
 function getCharacterNumber(year, month, day) {
-  const base = new Date(1926, 0, 1);
-  const target = new Date(year, month - 1, day);
-  const diffMs = target.getTime() - base.getTime();
+  const base = Date.UTC(1926, 0, 1);
+  const target = Date.UTC(year, month - 1, day);
+  const diffMs = target - base;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const idx0 = ((26 + diffDays) % 60 + 60) % 60;
   return idx0 + 1;
