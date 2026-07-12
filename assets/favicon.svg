@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#faf6f0"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#d9a752" stroke-width="2.5"/>
+  <!-- four-pointed sparkle (✦) -->
+  <path d="M32 10 C34.5 24 36 25.5 50 28 C36 30.5 34.5 32 32 46 C29.5 32 28 30.5 14 28 C28 25.5 29.5 24 32 10 Z"
+        fill="#d9a752" transform="translate(0 4)"/>
+  <circle cx="47" cy="15" r="2.6" fill="#df9892"/>
+  <circle cx="16" cy="48" r="2.2" fill="#df9892"/>
+</svg>

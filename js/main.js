@@ -135,6 +135,8 @@ function initMenuTabs() {
 // ============================================================
 // Individual Diagnosis (Menu A)
 // ============================================================
+const BIRTHDAY_STORAGE_KEY = 'oshi_portrait_birthday';
+
 function initDiagnosis() {
   const form = document.getElementById('diagnosisForm');
   if (!form) return;
@@ -145,8 +147,25 @@ function initDiagnosis() {
     const day = parseInt(document.getElementById('birthDay').value);
     if (!year || !month || !day) return;
     const result = diagnoseByBirthday(year, month, day);
-    if (result) showDiagnosisResult(result);
+    if (result) {
+      try {
+        localStorage.setItem(BIRTHDAY_STORAGE_KEY, JSON.stringify({ year, month, day }));
+      } catch (err) { /* プライベートモード等では保存しない */ }
+      showDiagnosisResult(result);
+    }
   });
+  restoreBirthdayInputs();
+}
+
+function restoreBirthdayInputs() {
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(BIRTHDAY_STORAGE_KEY));
+  } catch (err) { return; }
+  if (!saved || !saved.year || !saved.month || !saved.day) return;
+  document.getElementById('birthYear').value = saved.year;
+  document.getElementById('birthMonth').value = saved.month;
+  document.getElementById('birthDay').value = saved.day;
 }
 
 function showDiagnosisResult(info) {
@@ -171,6 +190,10 @@ function showDiagnosisResult(info) {
         <div class="detail-item">
           <div class="detail-label">✦ PROFILE / 基本性格</div>
           <div class="detail-text">${info.profile.personality}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">✦ CHARACTER / No.${info.number} だけの個性</div>
+          <div class="detail-text">${CHAR_DETAILS[info.number] || '—'}</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">✦ TRIGGER WORD / キュンとする言葉</div>
@@ -239,13 +262,35 @@ function showDiagnosisResult(info) {
   container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function shareResult(animal, name) {
-  const text = `✦ OSHI PORTRAIT - 12アニマル気質診断結果 ✦\n私の本質キャラは「${name}」(${animal})でした。\n#推し関係性相関図 #自分取扱説明書`;
+const SITE_URL = 'https://chainonjoli.github.io/animal_portrait/';
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+  ));
+}
+
+function shareText(text) {
+  // モバイル等ではOSのシェアシートを開き、それ以外はクリップボードへ
+  if (navigator.share) {
+    navigator.share({ text, url: SITE_URL }).catch((err) => {
+      if (err && err.name !== 'AbortError') copyText(text + '\n' + SITE_URL);
+    });
+    return;
+  }
+  copyText(text + '\n' + SITE_URL);
+}
+
+function copyText(text) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => {
       showToast('結果をクリップボードにコピーしました ✦');
     });
   }
+}
+
+function shareResult(animal, name) {
+  shareText(`✦ OSHI PORTRAIT - 12アニマル気質診断結果 ✦\n私の本質キャラは「${name}」(${animal})でした。\n#推し関係性相関図 #自分取扱説明書`);
 }
 
 // ============================================================
@@ -331,6 +376,11 @@ function loadPreset(presetName) {
       { name: '永瀬廉', number: 12 },
       { name: '髙橋海人', number: 22 },
     ],
+    'numberi': [
+      { name: '平野紫耀', number: 8 },
+      { name: '岸優太', number: 60 },
+      { name: '神宮寺勇太', number: 42 },
+    ],
     'snowman': [
       { name: '岩本照', number: 35 },
       { name: '深澤辰哉', number: 18 },
@@ -367,8 +417,8 @@ function loadPreset(presetName) {
     container.appendChild(row);
   });
   updateAddButton();
-  const displayName = presetName === 'kinpri' ? 'King & Prince' : 'Snow Man';
-  showToast(`${displayName} のポートレートデータをロードしました ✦`);
+  const displayNames = { kinpri: 'King & Prince', snowman: 'Snow Man', numberi: 'Number_i' };
+  showToast(`${displayNames[presetName] || presetName} のポートレートデータをロードしました ✦`);
 }
 
 function analyzeGroup() {
@@ -376,11 +426,12 @@ function analyzeGroup() {
   const members = [];
   
   rows.forEach(row => {
-    const name = row.querySelector('.name-input').value.trim();
+    const rawName = row.querySelector('.name-input').value.trim();
     const num = parseInt(row.querySelector('.number-input').value);
-    if (name && num >= 1 && num <= 60) {
+    if (rawName && num >= 1 && num <= 60) {
       const info = getCharacterInfo(num);
-      if (info) members.push({ ...info, name });
+      // nameはinnerHTMLに差し込まれるためエスケープ済みの値を保持する
+      if (info) members.push({ ...info, name: escapeHtml(rawName), rawName });
     }
   });
   
@@ -397,7 +448,9 @@ function generatePremiumReportHTML(members, balance, pairs) {
   const count = members.length;
   let groupName = 'チーム';
   const nameJoined = members.map(m => m.name).join('');
-  if (nameJoined.includes('廉') || nameJoined.includes('海人') || nameJoined.includes('紫耀') || nameJoined.includes('神宮寺') || nameJoined.includes('岸')) {
+  if ((nameJoined.includes('紫耀') || nameJoined.includes('神宮寺')) && !nameJoined.includes('廉') && !nameJoined.includes('海人')) {
+    groupName = 'Number_i';
+  } else if (nameJoined.includes('廉') || nameJoined.includes('海人')) {
     groupName = 'キンプリ';
   } else if (nameJoined.includes('岩本') || nameJoined.includes('深澤') || nameJoined.includes('ラウール') || nameJoined.includes('渡辺') || nameJoined.includes('目黒') || nameJoined.includes('向井') || nameJoined.includes('阿部') || nameJoined.includes('宮舘') || nameJoined.includes('佐久間')) {
     groupName = 'Snow Man';
@@ -831,9 +884,9 @@ function showGroupResult(members) {
         ${generateGroupSummary(members, balance, pairs)}
       </div>
       <div class="share-area mt-32" style="margin-top: 24px; display: flex; justify-content: center;">
-        <button class="btn btn-gold" onclick="shareGroupResult('${members.map(m=>m.name).join('、')}')">
+        <button class="btn btn-gold" onclick="shareGroupResult()">
           <span>SHARE CHEMISTRY REPORT</span>
-          <span class="btn-sub-text">レポートをコピーする</span>
+          <span class="btn-sub-text">レポートをシェアする</span>
         </button>
       </div>
     </div>
@@ -968,7 +1021,7 @@ const ANIMAL_ROLES = {
   'チータ': 'グループの熱量を一気に高め、未来を切り開く「情熱のトップランナー」',
   '黒ひょう': 'トレンドをいち早くキャッチし、スマートに表現する「スタイリッシュな表現者」',
   'ライオン': '絶対に妥協しない美学と圧倒的なカリスマ性でグループの格を高める「絶対的キング」',
-  '虎': '圧倒的な面倒見の良さと抜群 of バランス感覚で全体を優しく包み込む「包容力あふれる大黒柱」',
+  '虎': '圧倒的な面倒見の良さと抜群のバランス感覚で全体を優しく包み込む「包容力あふれる大黒柱」',
   'たぬき': 'みんなの緊張をほぐし、そこにいるだけで空気を優しく丸くする「和みのマスコット」',
   '子守熊': '冷静な先読みと豊かなサービス精神でファンを魅了する「芸術肌のロマンチスト」',
   'ゾウ': 'ここぞという時にどっしりと支え、限界を決めずに努力し続ける「ストイックな要石」',
@@ -1074,11 +1127,9 @@ function generateGroupSummary(members, balance, pairs) {
   return html;
 }
 
-function shareGroupResult(names) {
-  const text = `✦ OSHI PORTRAIT - 推しケミ分析 ✦\n${names} のポートレート分析を実行しました ✦\n#推しケミ相関図 #アニマル気質診断`;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('分析結果をクリップボードにコピーしました ✦'));
-  }
+function shareGroupResult() {
+  const names = lastAnalyzedMembers.map(m => m.rawName || m.name).join('、');
+  shareText(`✦ OSHI PORTRAIT - 推しケミ分析 ✦\n${names} のポートレート分析を実行しました ✦\n#推しケミ相関図 #アニマル気質診断`);
 }
 
 // ============================================================
@@ -1112,6 +1163,11 @@ function showMemberModal(member) {
         <div class="detail-label">✦ PROFILE / 基本性格</div>
         <div class="detail-text">${m.profile.personality}</div>
       </div>
+      ${m.number && CHAR_DETAILS[m.number] ? `
+      <div class="detail-item">
+        <div class="detail-label">✦ CHARACTER / No.${m.number} だけの個性</div>
+        <div class="detail-text">${CHAR_DETAILS[m.number]}</div>
+      </div>` : ''}
       <div class="detail-item">
         <div class="detail-label">✦ TRIGGER WORD / キュンとする言葉</div>
         <div class="detail-text">${m.profile.onePhrase || m.profile.catchphrase}</div>
